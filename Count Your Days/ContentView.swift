@@ -6,22 +6,25 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 struct CountdownEvent: Identifiable, Codable, Equatable {
     let id: UUID
     var title: String
     var targetDate: Date
     var colorHex: String
+    var imageData: Data?
 
     var color: Color {
         Color(hex: colorHex).opacity(0.3)
     }
 
-    init(id: UUID = UUID(), title: String, targetDate: Date, color: Color) {
+    init(id: UUID = UUID(), title: String, targetDate: Date, color: Color, imageData: Data? = nil) {
         self.id = id
         self.title = title
         self.targetDate = targetDate
         self.colorHex = color.toHex() ?? "#FFFFFF"
+        self.imageData = imageData
     }
 }
 
@@ -98,10 +101,7 @@ struct ContentView: View {
            let decoded = try? JSONDecoder().decode([CountdownEvent].self, from: savedData) {
             countdowns = decoded
         } else {
-            countdowns = [
-                CountdownEvent(title: "New TV Episode!", targetDate: Calendar.current.date(byAdding: .day, value: 2, to: Date())!, color: .purple),
-                CountdownEvent(title: "New Game Release", targetDate: Calendar.current.date(byAdding: .day, value: 15, to: Date())!, color: .mint)
-            ]
+            countdowns = []
         }
     }
 }
@@ -130,8 +130,23 @@ struct CountdownCard: View {
 
     var body: some View {
         ZStack {
+            if let data = event.imageData, let uiImage = UIImage(data: data) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(height: 120)
+                    .clipped()
+            }
+
             RoundedRectangle(cornerRadius: 20)
                 .fill(event.color)
+                .mask(
+                    LinearGradient(
+                        gradient: Gradient(colors: [.black, .black, .clear]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .frame(height: 120)
                 .shadow(radius: 5)
 
@@ -156,6 +171,7 @@ struct CountdownCard: View {
             }
             .padding(.horizontal)
         }
+        .clipShape(RoundedRectangle(cornerRadius: 20))
         .onReceive(timer) { input in
             now = input
         }
@@ -167,6 +183,8 @@ struct AddCountdownView: View {
     @State private var title: String
     @State private var date: Date
     @State private var selectedColor: Color
+    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var imageData: Data?
 
     var editingEvent: CountdownEvent?
     var onSave: (CountdownEvent) -> Void
@@ -176,6 +194,7 @@ struct AddCountdownView: View {
         _title = State(initialValue: editingEvent?.title ?? "")
         _date = State(initialValue: editingEvent?.targetDate ?? Date())
         _selectedColor = State(initialValue: Color(hex: editingEvent?.colorHex ?? "#A0F0D0"))
+        _imageData = State(initialValue: editingEvent?.imageData)
         self.onSave = onSave
     }
 
@@ -199,12 +218,24 @@ struct AddCountdownView: View {
                     }
                 }
 
+                Section(header: Text("Optional Background Image")) {
+                    PhotosPicker("Choose Image", selection: $selectedPhoto, matching: .images)
+                    if let imageData = imageData, let uiImage = UIImage(data: imageData) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 120)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                }
+
                 Section(header: Text("Preview")) {
                     CountdownCard(event: CountdownEvent(
                         id: editingEvent?.id ?? UUID(),
                         title: title.isEmpty ? "Event Title" : title,
                         targetDate: date,
-                        color: selectedColor
+                        color: selectedColor,
+                        imageData: imageData
                     ))
                 }
             }
@@ -219,12 +250,20 @@ struct AddCountdownView: View {
                             id: editingEvent?.id ?? UUID(),
                             title: title,
                             targetDate: date,
-                            color: selectedColor
+                            color: selectedColor,
+                            imageData: imageData
                         )
                         onSave(updated)
                         dismiss()
                     }
                     .disabled(title.isEmpty)
+                }
+            }
+            .onChange(of: selectedPhoto) { newItem in
+                Task {
+                    if let data = try? await newItem?.loadTransferable(type: Data.self) {
+                        imageData = data
+                    }
                 }
             }
         }
