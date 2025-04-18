@@ -108,9 +108,24 @@ struct ContentView: View {
 
 struct CountdownCard: View {
     let event: CountdownEvent
+    @State private var now = Date()
 
-    var daysRemaining: Int {
-        Calendar.current.dateComponents([.day], from: Date(), to: event.targetDate).day ?? 0
+    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    var timeRemainingText: String {
+        let secondsRemaining = Int(event.targetDate.timeIntervalSince(now))
+
+        if secondsRemaining <= 0 {
+            return "Now!"
+        } else if secondsRemaining < 60 {
+            return "\(secondsRemaining)s"
+        } else if secondsRemaining < 3600 {
+            return "\(secondsRemaining / 60)m"
+        } else if secondsRemaining < 86400 {
+            return "\(secondsRemaining / 3600)h"
+        } else {
+            return "\(secondsRemaining / 86400)d"
+        }
     }
 
     var body: some View {
@@ -134,12 +149,15 @@ struct CountdownCard: View {
 
                 Spacer()
 
-                Text("\(daysRemaining)d")
+                Text(timeRemainingText)
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
             }
             .padding(.horizontal)
+        }
+        .onReceive(timer) { input in
+            now = input
         }
     }
 }
