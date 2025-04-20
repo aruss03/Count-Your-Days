@@ -138,17 +138,28 @@ struct CountdownCard: View {
                     .clipped()
             }
 
-            RoundedRectangle(cornerRadius: 20)
-                .fill(event.color)
-                .mask(
-                    LinearGradient(
-                        gradient: Gradient(colors: [.black, .black, .clear]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+            if event.imageData != nil {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(event.color)
+                    .mask(
+                        LinearGradient(
+                            gradient: Gradient(stops: [
+                                .init(color: .black, location: 0.0),
+                                .init(color: .black, location: 0.4),
+                                .init(color: .clear, location: 1.0)
+                            ]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
                     )
-                )
-                .frame(height: 120)
-                .shadow(radius: 5)
+                    .frame(height: 120)
+                    .shadow(radius: 5)
+            } else {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(event.color)
+                    .frame(height: 120)
+                    .shadow(radius: 5)
+            }
 
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
