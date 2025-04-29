@@ -136,24 +136,6 @@ struct CountdownCard: View {
                     .scaledToFill()
                     .frame(height: 120)
                     .clipped()
-            }
-
-            if event.imageData != nil {
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(event.color)
-                    .mask(
-                        LinearGradient(
-                            gradient: Gradient(stops: [
-                                .init(color: .black, location: 0.0),
-                                .init(color: .black, location: 0.4),
-                                .init(color: .clear, location: 1.0)
-                            ]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .frame(height: 120)
-                    .shadow(radius: 5)
             } else {
                 RoundedRectangle(cornerRadius: 20)
                     .fill(event.color)
@@ -166,11 +148,13 @@ struct CountdownCard: View {
                     Text(event.title)
                         .font(.title3)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.7), radius: 2, x: 0, y: 1)
 
                     Text(event.targetDate, style: .date)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.7), radius: 2, x: 0, y: 1)
                 }
 
                 Spacer()
@@ -178,7 +162,8 @@ struct CountdownCard: View {
                 Text(timeRemainingText)
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.7), radius: 2, x: 0, y: 1)
             }
             .padding(.horizontal)
         }
@@ -312,6 +297,12 @@ extension Color {
         let b = Int(blue * 255)
 
         return String(format: "#%02X%02X%02X", r, g, b)
+    }
+}
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
     }
 }
 
